@@ -4,8 +4,8 @@
       <p>#{{ props.id }}</p>
     </div>
     <div class="contract">
-      <img :src="`/images/${props.contract}.svg`" alt="contract" />
-      <p>{{ props.contract }}</p>
+      <img :src="props.contractIcon" alt="contract" />
+      <p>{{ props.contractShort }}</p>
     </div>
     <div class="value">
       <p>{{ props.value }}</p>
@@ -29,18 +29,31 @@
       <p>{{ props.liqPrice }}</p>
     </div>
     <div class="sl-tp">
-      <p>{{ props.slTp }}</p>
+      <p>{{ `${props.stopLoss}/${props.targetProfit}` }}</p>
     </div>
     <div class="open-at">
-      <p>{{ props.openAt }}</p>
+      <p>{{ formatDate(props.openAt) }}</p>
     </div>
     <div class="close-on">
-      <p>{{ props.closeOn }}</p>
+      <span>{{
+        props.closeOn === null ? "----" : formatDate(props.closeOn)
+      }}</span>
     </div>
   </section>
 </template>
 
 <script setup>
+const formatDate = (date) =>
+  date.toLocaleDateString("en-us", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hourCycle: "h24",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  });
+
 const props = defineProps({
   id: {
     type: Number,
@@ -48,7 +61,15 @@ const props = defineProps({
   },
   contract: {
     type: String,
-    defaut: "undefined",
+    defaut: "NULL",
+  },
+  contractIcon: {
+    type: String,
+    defaut: "NULL",
+  },
+  contractShort: {
+    type: String,
+    default: "NULL",
   },
   value: {
     type: Number,
@@ -78,13 +99,13 @@ const props = defineProps({
     type: Number,
     default: -1,
   },
-  liqPrice: {
+  stopLoss: {
     type: Number,
     default: -1,
   },
-  slTp: {
-    type: String,
-    default: "NULL",
+  targetProfit: {
+    type: Number,
+    default: -1,
   },
   openAt: {
     type: Date,
@@ -92,7 +113,14 @@ const props = defineProps({
   },
   closeOn: {
     type: Date,
-    default: new Date(),
+    default: null,
   },
 });
+// const pricesWs = new WebSocket(`wss://ws.coincap.io/prices?assets=zcash`);
+
+// console.log("we are establishing websocket");
+// pricesWs.onmessage = function (msg) {
+//   console.log(JSON.parse(msg.data[props.contract]));
+//   console.log("we established");
+// };
 </script>
