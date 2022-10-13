@@ -15,7 +15,9 @@
           <div>
             <button class="secondary" @click="closeModal"></button>
           </div>
-          <button class="primary">{{ props.primaryBtn }}</button>
+          <button class="primary" @click="onSubmitForm">
+            {{ props.btnLabel }}
+          </button>
         </footer>
       </div>
     </dialog>
@@ -24,9 +26,12 @@
 
 <script setup>
 import Close from "/src/assets/Close.vue";
-const props = defineProps(["modalTitle", "primaryBtn"]);
-const emits = defineEmits(["closeModal"]);
+const props = defineProps(["modalTitle", "btnLabel"]);
+const emits = defineEmits(["closeModal", "submitForm"]);
 const closeModal = () => {
   emits("closeModal");
+};
+const onSubmitForm = () => {
+  emits("submitForm");
 };
 </script>

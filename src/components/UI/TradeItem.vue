@@ -5,7 +5,7 @@
     </div>
     <div class="contract">
       <img :src="props.contractIcon" alt="contract" />
-      <p>{{ props.contractShort }}</p>
+      <p>{{ props.contractSymbol }}</p>
     </div>
     <div class="value">
       <p>{{ props.value }}</p>
@@ -43,6 +43,20 @@
 </template>
 
 <script setup>
+import axios from "axios";
+const emits = defineEmits(["updateTrade"]);
+axios
+  .get(
+    `https://api.coingecko.com/api/v3/coins/${props.contract}?localization=false&tickers=false&market_data=false&community_data=false&developer_data=false&sparkline=false`
+  )
+  .then((res) => {
+    emits("updateTrade", {
+      ...props,
+      contractIcon: res.data.image.small,
+      contractSymbol: res.data.symbol,
+    });
+  });
+
 const formatDate = (date) =>
   date.toLocaleDateString("en-us", {
     day: "2-digit",
@@ -67,7 +81,7 @@ const props = defineProps({
     type: String,
     defaut: "NULL",
   },
-  contractShort: {
+  contractSymbol: {
     type: String,
     default: "NULL",
   },

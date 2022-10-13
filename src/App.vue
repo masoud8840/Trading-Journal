@@ -1,7 +1,7 @@
 <template>
   <header class="header">
     <h1 class="headline">Orders</h1>
-    <h3 class="subheadline">{{ totalOrders }} orders found</h3>
+    <h3 class="subheadline">{{ totalOrders }} Orders Found</h3>
   </header>
 
   <nav class="navigation">
@@ -15,18 +15,18 @@
         >
       </li>
     </ul>
-    <plus class="plus-icon" @click="openNewCatGroupModal" />
+    <plus v-if="false" class="plus-icon" @click="openNewCatGroupModal" />
   </nav>
 
   <main>
     <table-header></table-header>
     <trade-item
       v-for="(trade, index) in trades"
-      :key="index"
+      :key="trade"
       :id="trade.id"
       :contract="trade.contract"
       :contract-icon="trade.contractIcon"
-      :contract-short="trade.contractShort"
+      :contract-symbol="trade.contractSymbol"
       :value="trade.value"
       :leverage="trade.leverage"
       :amount="trade.amount"
@@ -38,9 +38,8 @@
       :target-profit="trade.targetProfit"
       :open-at="trade.openAt"
       :close-on="trade.closeOn"
+      @update-trade="updateTrade"
     ></trade-item>
-
-    {{ trades }}
   </main>
 
   <section class="pagination">
@@ -56,17 +55,26 @@
     modal-title="New Trade"
     v-if="newTradeModal"
     @close-modal="closeModal"
-    primary-btn="add to list"
+    @submit-form="addNewTrade"
+    btn-label="add to list"
   >
     <form class="add-trade-modal-form">
-      <section class="input-group">
-        <label for="contract">Contract</label>
+      <section class="input-group contract-input-container">
+        <label for="contract">contract</label>
         <input
           type="text"
           id="contract"
-          placeholder="BTC"
-          v-model="newTrade.contract"
+          placeholder="bitcoin"
+          v-model.lazy="newTrade.contract"
+          @input="searchCurrency"
         />
+        <!-- <ul class="contract-search-result">
+          <li class="contract-search-result-item" v-for="item in searchResult">
+            <span class="name">
+              {{ item.name }}
+            </span>
+          </li>
+        </ul> -->
       </section>
       <section class="input-group">
         <label for="value">value</label>
@@ -77,14 +85,9 @@
           v-model="newTrade.value"
         />
       </section>
-      <section class="input-group">
+      <section class="input-group leverage-input-group">
         <label for="leverage">leverage</label>
-        <input
-          type="number"
-          id="leverage"
-          placeholder="10"
-          v-model="newTrade.leverage"
-        />
+        <range-slider v-model="newTrade.leverage"></range-slider>
       </section>
       <section class="input-group">
         <label for="side">Side</label>
@@ -95,45 +98,64 @@
       </section>
       <section class="input-group">
         <label for="entry">entry price</label>
-        <input type="number" id="entry" placeholder="10.2" />
+        <input
+          type="number"
+          id="entry"
+          placeholder="10.2"
+          v-model="newTrade.entry"
+        />
       </section>
       <section class="input-group">
-        <label for="entry">Stop Loss / Target Profit</label>
+        <label for="st-tp">Stop Loss / Target Profit</label>
         <div>
-          <input type="number" id="entry" placeholder="9.2" />
+          <input
+            type="number"
+            id="st-tp"
+            placeholder="9.2"
+            v-model="newTrade.stopLoss"
+          />
           <span>/</span>
-          <input type="number" id="entry" placeholder="15.2" />
+          <input
+            type="number"
+            id="st-tp"
+            placeholder="15.2"
+            v-model="newTrade.targetProfit"
+          />
         </div>
       </section>
     </form>
   </modal-base>
+
+  <!-- Do not add this yet -->
+  <!--
   <modal-base
     modal-title="New Category Group"
     v-if="newCatGroupModal"
     @close-modal="closeModal"
-    primary-btn="add category"
+    btn-label="add category"
   >
     <form class="add-trade-modal-form">
       <section class="input-group">
-        <label for="name">Contract</label>
+        <label for="name">Contract*</label>
         <input
           type="text"
           id="name"
-          placeholder="BTC"
-          v-model="newTrade.contract"
+          placeholder="Long/Buy"
+          v-model="newCategory.title"
         />
       </section>
       <section class="input-group">
-        <label for="value">value</label>
+        <label for="cat-shorthand">short hand</label>
         <input
           type="number"
-          id="value"
-          placeholder="120"
-          v-model="newTrade.value"
+          id="cat-shorthand"
+          placeholder="long"
+          v-model="newCategory.link"
         />
       </section>
     </form>
-  </modal-base>
+  </modal-base> 
+  -->
 </template>
 
 <script setup>
@@ -141,12 +163,14 @@
 import TableHeader from "./components/layout/TableHeader.vue";
 import TradeItem from "./components/UI/TradeItem.vue";
 import ModalBase from "./components/UI/ModalBase.vue";
+import RangeSlider from "./components/UI/RangeSlider.vue";
 // icons
 import plus from "./assets/Plus.vue";
 import LeftChevron from "./assets/LeftChevron.vue";
 import RightChevron from "./assets/RightChevron.vue";
 
 import { ref } from "vue";
+import axios from "axios";
 
 const newTradeModal = ref(false);
 const newCatGroupModal = ref(false);
@@ -160,8 +184,6 @@ const openNewTradeModal = () => {
 const openNewCatGroupModal = () => {
   newCatGroupModal.value = true;
 };
-const side = ref("long");
-
 const formatDate = (date) =>
   date.toLocaleDateString("en-us", {
     day: "2-digit",
@@ -176,9 +198,9 @@ const formatDate = (date) =>
 const trades = ref([
   {
     id: 192,
-    contract: "",
+    contract: "zcash",
     contractIcon: "",
-    contractShort: "ZEC",
+    contractSymbol: "",
     value: 0,
     leverage: 1,
     amount: 0,
@@ -194,23 +216,50 @@ const trades = ref([
 ]);
 const totalOrders = ref(trades.value.length);
 const newTrade = ref({
-  id: 0,
   contract: "",
-  contractIcon: "",
-  contractShort: "ZEC",
   value: 0,
   leverage: 1,
-  amount: 0,
   side: "long",
   entry: 0,
-  pnl: 0,
-  liqPrice: 0,
   stopLoss: 0,
   targetProfit: 0,
   openAt: formatDate(new Date()),
   closeOn: formatDate(new Date()),
 });
 
+const tradeTrashould = ref({
+  left: `${((newTrade.value.leverage - 1) / (100 + 9)) * 100}%`,
+});
+const addNewTrade = () => {
+  const aTrade = {
+    id: totalOrders.value++,
+    contract: newTrade.value.contract,
+    contractIcon: "",
+    contractSymbol: "",
+    value: newTrade.value.value,
+    leverage: newTrade.value.leverage,
+    amount: 0,
+    side: newTrade.value.side,
+    entry: newTrade.value.entry,
+    pnl: 0,
+    liqPrice: 0,
+    stopLoss: newTrade.value.stopLoss,
+    targetProfit: newTrade.value.targetProfit,
+    openAt: new Date(),
+    closeOn: null,
+  };
+  trades.value.unshift(aTrade);
+  console.log("added");
+};
+
+const updateTrade = (value) => {
+  const updatedTrade = trades.value.map((t) => {
+    if (t.id === value.id) {
+      t.contractIcon = value.contractIcon;
+      t.contractSymbol = value.contractSymbol;
+    }
+  });
+};
 const categories = ref([
   {
     title: "All Orders",
@@ -225,8 +274,20 @@ const categories = ref([
     link: "short",
   },
 ]);
+const newCategory = ref({
+  title: "",
+  link: "",
+});
 const currentCat = ref("all");
 const setCurrentCat = (cat) => {
   currentCat.value = cat;
 };
+
+// Search Currency in the Modal
+const searchCurrency = async () => {
+  await axios.get(`https://cryptingup.com/api/assets/btc`).then((res) => {
+    console.log(res.data);
+  });
+};
+const searchResult = ref([]);
 </script>
