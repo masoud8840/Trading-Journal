@@ -19,7 +19,7 @@
       @input="updateValue"
     />
     <span class="ruler">
-      <span v-for="num in 28"></span>
+      <span v-for="num in 31"></span>
     </span>
     <span class="level" :style="{ left: `${((value - 1) / (100 + 5)) * 100}%` }"
       >x{{ value }}</span
@@ -102,12 +102,13 @@ const calPercent = (s, e, p) => {
   span.level {
     position: absolute;
     top: 40px;
-    color: var(--semilightText);
+    color: var(--text);
     font-size: 14px;
     padding: 0 5px;
+    font-weight: 400;
   }
   span.ruler {
-    height: 37px;
+    height: 20px;
     position: absolute;
     top: 23px;
     left: 0;
@@ -117,8 +118,8 @@ const calPercent = (s, e, p) => {
     padding: 0 14px;
     span {
       height: 12px;
-      width: 1px;
-      background-color: #767676;
+      width: 2px;
+      background-color: #a9a9a9;
     }
   }
 }

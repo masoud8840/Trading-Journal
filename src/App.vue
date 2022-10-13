@@ -91,36 +91,50 @@
       </section>
       <section class="input-group">
         <label for="side">Side</label>
-        <select id="side" :class="newTrade.side" v-model="newTrade.side">
-          <option value="long">Long</option>
-          <option value="short">Short</option>
-        </select>
+        <div class="row">
+          <button
+            type="button"
+            :class="{ 'active-long': newTrade.side === 'long' }"
+            @click="setNewTradeSide('long')"
+          >
+            Buy
+          </button>
+          <button
+            type="button"
+            :class="{ 'active-short': newTrade.side === 'short' }"
+            @click="setNewTradeSide('short')"
+          >
+            Sell
+          </button>
+        </div>
       </section>
-      <section class="input-group">
-        <label for="entry">entry price</label>
-        <input
-          type="number"
-          id="entry"
-          placeholder="10.2"
-          v-model="newTrade.entry"
-        />
-      </section>
-      <section class="input-group">
-        <label for="st-tp">Stop Loss / Target Profit</label>
-        <div>
+      <section class="input-group row">
+        <div class="col">
+          <label for="entry">entry price</label>
           <input
             type="number"
-            id="st-tp"
-            placeholder="9.2"
-            v-model="newTrade.stopLoss"
+            id="entry"
+            placeholder="10.2"
+            v-model="newTrade.entry"
           />
-          <span>/</span>
-          <input
-            type="number"
-            id="st-tp"
-            placeholder="15.2"
-            v-model="newTrade.targetProfit"
-          />
+        </div>
+        <div class="col">
+          <label for="sl-tp">Stop Loss / Target Profit</label>
+          <div>
+            <input
+              type="number"
+              id="st-tp"
+              placeholder="9.2"
+              v-model="newTrade.stopLoss"
+            />
+            <span>/</span>
+            <input
+              type="number"
+              id="st-tp"
+              placeholder="15.2"
+              v-model="newTrade.targetProfit"
+            />
+          </div>
         </div>
       </section>
     </form>
@@ -259,6 +273,9 @@ const updateTrade = (value) => {
       t.contractSymbol = value.contractSymbol;
     }
   });
+};
+const setNewTradeSide = (side) => {
+  newTrade.value.side = side;
 };
 const categories = ref([
   {
