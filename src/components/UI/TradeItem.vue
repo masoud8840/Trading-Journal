@@ -1,11 +1,11 @@
 <template>
-  <section class="trade-item">
+  <section class="trade-item" :class="props.status">
     <div class="id">
       <p>#{{ props.id }}</p>
     </div>
     <div class="contract">
       <img :src="props.contractIcon" alt="contract" />
-      <p>{{ props.contractSymbol }}</p>
+      <p>{{ props.contract }}</p>
     </div>
     <div class="value">
       <p>{{ props.value }}</p>
@@ -45,17 +45,39 @@
 <script setup>
 import axios from "axios";
 const emits = defineEmits(["updateTrade"]);
-axios
-  .get(
-    `https://api.coingecko.com/api/v3/coins/${props.contract}?localization=false&tickers=false&market_data=false&community_data=false&developer_data=false&sparkline=false`
-  )
-  .then((res) => {
-    emits("updateTrade", {
-      ...props,
-      contractIcon: res.data.image.small,
-      contractSymbol: res.data.symbol,
+
+const apiCalls = async () => {
+  let coinName = "";
+  await axios
+    .get(`http://rest.coinapi.io/v1/assets/${props.contract}`, {
+      headers: {
+        "X-CoinAPI-Key": "CBFD70D0-DA62-4385-9A8B-6A94B83F5C69",
+      },
+    })
+    .then((res) => {
+      console.log("asset info", res.data[0].name.toLowerCase());
+      coinName = res.data[0].name.toLowerCase();
+    })
+    .catch((e) => {
+      alert(e.message);
     });
-  });
+  await axios
+    .get(
+      `https://api.coingecko.com/api/v3/coins/${coinName}?tickers=false&market_data=false&community_data=false&developer_data=false&sparkline=false`
+    )
+    .then((res) => {
+      console.log(res.data);
+      emits("updateTrade", {
+        ...props,
+        contractIcon: res.data.image.small,
+        contractName: coinName,
+      });
+    })
+    .catch((e) => {
+      alert(e.message);
+    });
+};
+// if (!props.contractIcon) apiCalls();
 
 const formatDate = (date) =>
   date.toLocaleDateString("en-us", {
@@ -81,7 +103,7 @@ const props = defineProps({
     type: String,
     defaut: "NULL",
   },
-  contractSymbol: {
+  contractName: {
     type: String,
     default: "NULL",
   },
@@ -128,6 +150,10 @@ const props = defineProps({
   closeOn: {
     type: Date,
     default: null,
+  },
+  status: {
+    type: String,
+    default: "open",
   },
 });
 // const pricesWs = new WebSocket(`wss://ws.coincap.io/prices?assets=zcash`);

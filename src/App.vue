@@ -21,12 +21,12 @@
   <main>
     <table-header></table-header>
     <trade-item
-      v-for="(trade, index) in trades"
+      v-for="(trade, index) in tradesOutput"
       :key="trade"
       :id="trade.id"
       :contract="trade.contract"
       :contract-icon="trade.contractIcon"
-      :contract-symbol="trade.contractSymbol"
+      :contract-name="trade.contractName"
       :value="trade.value"
       :leverage="trade.leverage"
       :amount="trade.amount"
@@ -38,7 +38,9 @@
       :target-profit="trade.targetProfit"
       :open-at="trade.openAt"
       :close-on="trade.closeOn"
+      :status="trade.status"
       @update-trade="updateTrade"
+      @click="closeTrade(index)"
     ></trade-item>
   </main>
 
@@ -46,8 +48,8 @@
     <plus class="plus-icon" @click="openNewTradeModal" />
     <div>
       <LeftChevron class="left-chevron" />
-      <input type="number" name="page" id="page" value="15" />
-      <span>of 192</span>
+      <input type="number" name="page" id="page" value="1" />
+      <span>of 1</span>
       <RightChevron class="right-chevron" />
     </div>
   </section>
@@ -59,7 +61,7 @@
     btn-label="add to list"
   >
     <form class="add-trade-modal-form">
-      <section class="input-group contract-input-container">
+      <section class="input-group">
         <label for="contract">contract</label>
         <input
           type="text"
@@ -68,13 +70,6 @@
           v-model.lazy="newTrade.contract"
           @input="searchCurrency"
         />
-        <!-- <ul class="contract-search-result">
-          <li class="contract-search-result-item" v-for="item in searchResult">
-            <span class="name">
-              {{ item.name }}
-            </span>
-          </li>
-        </ul> -->
       </section>
       <section class="input-group">
         <label for="value">value</label>
@@ -87,7 +82,7 @@
       </section>
       <section class="input-group leverage-input-group">
         <label for="leverage">leverage</label>
-        <range-slider v-model="newTrade.leverage"></range-slider>
+        <range-slider v-model.number="newTrade.leverage"></range-slider>
       </section>
       <section class="input-group">
         <label for="side">Side</label>
@@ -137,39 +132,11 @@
           </div>
         </div>
       </section>
+      <section class="error" v-if="modalError">
+        <p class="modal-error">Check all available empty inputs</p>
+      </section>
     </form>
   </modal-base>
-
-  <!-- Do not add this yet -->
-  <!--
-  <modal-base
-    modal-title="New Category Group"
-    v-if="newCatGroupModal"
-    @close-modal="closeModal"
-    btn-label="add category"
-  >
-    <form class="add-trade-modal-form">
-      <section class="input-group">
-        <label for="name">Contract*</label>
-        <input
-          type="text"
-          id="name"
-          placeholder="Long/Buy"
-          v-model="newCategory.title"
-        />
-      </section>
-      <section class="input-group">
-        <label for="cat-shorthand">short hand</label>
-        <input
-          type="number"
-          id="cat-shorthand"
-          placeholder="long"
-          v-model="newCategory.link"
-        />
-      </section>
-    </form>
-  </modal-base> 
-  -->
 </template>
 
 <script setup>
@@ -183,73 +150,86 @@ import plus from "./assets/Plus.vue";
 import LeftChevron from "./assets/LeftChevron.vue";
 import RightChevron from "./assets/RightChevron.vue";
 
-import { ref } from "vue";
-import axios from "axios";
+import { ref, computed } from "vue";
 
+const modalError = ref(false);
 const newTradeModal = ref(false);
-const newCatGroupModal = ref(false);
+// comments will use in next version of app
+// const newCatGroupModal = ref(false);
 const closeModal = () => {
   newTradeModal.value = false;
-  newCatGroupModal.value = false;
+  // newCatGroupModal.value = false;
+  modalError.value = false;
 };
 const openNewTradeModal = () => {
   newTradeModal.value = true;
 };
-const openNewCatGroupModal = () => {
-  newCatGroupModal.value = true;
-};
-const formatDate = (date) =>
-  date.toLocaleDateString("en-us", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    hourCycle: "h24",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-  });
+// const openNewCatGroupModal = () => {
+//   newCatGroupModal.value = true;
+// };
 
-const trades = ref([
+const categories = ref([
   {
-    id: 192,
-    contract: "zcash",
-    contractIcon: "",
-    contractSymbol: "",
-    value: 0,
-    leverage: 1,
-    amount: 0,
-    side: "long",
-    entry: 0,
-    pnl: 0,
-    liqPrice: 0,
-    stopLoss: 0,
-    targetProfit: 0,
-    openAt: new Date(),
-    closeOn: null,
+    title: "All Orders",
+    link: "all",
+  },
+  {
+    title: "Buy",
+    link: "long",
+  },
+  {
+    title: "Sell",
+    link: "short",
   },
 ]);
-const totalOrders = ref(trades.value.length);
+// const newCategory = ref({
+//   title: "",
+//   link: "",
+// });
+const currentCat = ref("all");
+const setCurrentCat = (cat) => {
+  currentCat.value = cat;
+};
+const trades = ref([]);
+const tradesOutput = computed(() => {
+  if (currentCat.value === "all") {
+    return trades.value;
+  } else {
+    const newTrades = trades.value.filter((t) => t.side === currentCat.value);
+    return newTrades;
+  }
+});
+const totalOrders = ref(0);
 const newTrade = ref({
   contract: "",
-  value: 0,
+  value: null,
   leverage: 1,
   side: "long",
-  entry: 0,
-  stopLoss: 0,
-  targetProfit: 0,
-  openAt: formatDate(new Date()),
-  closeOn: formatDate(new Date()),
+  entry: null,
+  stopLoss: null,
+  targetProfit: null,
+  openAt: new Date(),
+  closeOn: null,
+  status: "open",
 });
 
-const tradeTrashould = ref({
-  left: `${((newTrade.value.leverage - 1) / (100 + 9)) * 100}%`,
-});
 const addNewTrade = () => {
+  if (
+    newTrade.value.contract.trim() === "" ||
+    newTrade.value.value === null ||
+    newTrade.value.entry === null ||
+    newTrade.value.stopLoss === null ||
+    newTrade.value.targetProfit === null
+  ) {
+    modalError.value = true;
+    return;
+  }
+  modalError.value = false;
   const aTrade = {
-    id: totalOrders.value++,
+    id: ++totalOrders.value,
     contract: newTrade.value.contract,
     contractIcon: "",
-    contractSymbol: "",
+    contractName: "",
     value: newTrade.value.value,
     leverage: newTrade.value.leverage,
     amount: 0,
@@ -261,9 +241,25 @@ const addNewTrade = () => {
     targetProfit: newTrade.value.targetProfit,
     openAt: new Date(),
     closeOn: null,
+    status: newTrade.status,
   };
   trades.value.unshift(aTrade);
-  console.log("added");
+
+  newTrade.value = {
+    contract: "",
+    value: null,
+    leverage: 1,
+    side: "long",
+    entry: null,
+    stopLoss: null,
+    targetProfit: null,
+    openAt: new Date(),
+    closeOn: null,
+    status: "open",
+  };
+  newTradeModal.value = false;
+
+  localStorage.setItem("trades", JSON.stringify(trades.value));
 };
 
 const updateTrade = (value) => {
@@ -274,37 +270,29 @@ const updateTrade = (value) => {
     }
   });
 };
+
+const closeTrade = (index) => {
+  if (trades.value[index].status === "closed") return;
+  trades.value[index].status = "closed";
+  trades.value[index].closeOn = new Date();
+  const closedTrade = trades.value[index];
+  trades.value.splice(index, 1);
+  trades.value.push(closedTrade);
+};
 const setNewTradeSide = (side) => {
   newTrade.value.side = side;
 };
-const categories = ref([
-  {
-    title: "All Orders",
-    link: "all",
-  },
-  {
-    title: "Long/Buy",
-    link: "long",
-  },
-  {
-    title: "Short/Sell",
-    link: "short",
-  },
-]);
-const newCategory = ref({
-  title: "",
-  link: "",
-});
-const currentCat = ref("all");
-const setCurrentCat = (cat) => {
-  currentCat.value = cat;
-};
-
 // Search Currency in the Modal
-const searchCurrency = async () => {
-  await axios.get(`https://cryptingup.com/api/assets/btc`).then((res) => {
-    console.log(res.data);
-  });
-};
-const searchResult = ref([]);
+// const searchCurrency = async () => {
+//   await axios
+//     .get(`http://rest.coinapi.io/v1/assets/${newTrade.value.contract}`, {
+//       headers: {
+//         "X-CoinAPI-Key": "CBFD70D0-DA62-4385-9A8B-6A94B83F5C69",
+//       },
+//     })
+//     .then((res) => {
+//       console.log(res.status);
+//     });
+// };
+// const searchResult = ref([]);
 </script>
