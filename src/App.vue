@@ -66,7 +66,7 @@
         <input
           type="text"
           id="contract"
-          placeholder="bitcoin"
+          placeholder="BTC"
           v-model.lazy="newTrade.contract"
           @input="searchCurrency"
         />
@@ -133,7 +133,7 @@
         </div>
       </section>
       <section class="error" v-if="modalError">
-        <p class="modal-error">Check all available empty inputs</p>
+        <p class="modal-error">Recheck all available empty inputs!</p>
       </section>
     </form>
   </modal-base>

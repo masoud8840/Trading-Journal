@@ -353,6 +353,9 @@ dialog {
     .input-group {
       display: grid;
       gap: 5px;
+      #contract {
+        text-transform: uppercase;
+      }
       &.row {
         display: flex;
         gap: 15px;

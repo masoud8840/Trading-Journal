@@ -55,7 +55,6 @@ const apiCalls = async () => {
       },
     })
     .then((res) => {
-      console.log("asset info", res.data[0].name.toLowerCase());
       coinName = res.data[0].name.toLowerCase();
     })
     .catch((e) => {
@@ -77,7 +76,8 @@ const apiCalls = async () => {
       alert(e.message);
     });
 };
-// if (!props.contractIcon) apiCalls();
+
+if (!props.contractIcon) apiCalls();
 
 const formatDate = (date) =>
   date.toLocaleDateString("en-us", {
@@ -156,11 +156,4 @@ const props = defineProps({
     default: "open",
   },
 });
-// const pricesWs = new WebSocket(`wss://ws.coincap.io/prices?assets=zcash`);
-
-// console.log("we are establishing websocket");
-// pricesWs.onmessage = function (msg) {
-//   console.log(JSON.parse(msg.data[props.contract]));
-//   console.log("we established");
-// };
 </script>
