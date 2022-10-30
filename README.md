@@ -3,6 +3,7 @@ This app will help traders to track their trades & profits.
 
 ### Run App
 To run the project you have to install nodejs on your machine, [Node.JS](https://www.nodejs.org)
+
 To install project dependencies run this command
 ```
 npm install
