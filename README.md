@@ -1,7 +1,16 @@
-# Vue 3 + Vite
+# Trading Journal
+This app will help traders to track their trades & profits.
 
-This template should help get you started developing with Vue 3 in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+### Run App
+To run the project you have to install nodejs on your machine, [Node.JS](https://www.nodejs.org)
+To install project dependencies run this command
+```
+npm install
+```
+To run app on localhost run this command:
+```
+npm run dev
+```
 
-## Recommended IDE Setup
-
-- [VS Code](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar)
+### Figma File Here
+[TradingJournal](https://www.figma.com/file/7IeCXkUepoyDLVM5F4H3yv/Trade-History-List?node-id=0%3A1)
